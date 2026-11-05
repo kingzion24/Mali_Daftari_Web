@@ -1,7 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
 import { api, money, shortDate } from '../lib/api';
+import { getLocale, makeT } from '../lib/i18n';
 
+const t = makeT(getLocale(Astro));
 const url = Astro.url;
 const status = url.searchParams.get('status') ?? '';
 const search = url.searchParams.get('search') ?? '';
@@ -20,31 +22,26 @@ try {
 }
 
 const total = orders.reduce((s, o) => s + Number(o.total), 0);
-const badgeClass: Record<string, string> = {
-  delivered: 'green',
-  loaded: 'blue',
-  pending: 'gray',
-  cancelled: 'rose',
-};
+const badgeClass: Record<string, string> = { delivered: 'green', loaded: 'blue', pending: 'gray', cancelled: 'rose' };
 const statuses = ['', 'pending', 'loaded', 'delivered', 'cancelled'];
 ---
 
-<Base title="Orders" subtitle="Refill deliveries">
+<Base title={t('nav.orders')} subtitle={t('orders.sub')}>
   <form class="toolbar" method="get">
     <div class="field">
-      <label>Status</label>
+      <label>{t('f.status')}</label>
       <select class="input" name="status">
         {statuses.map((s) => (
-          <option value={s} selected={s === status}>{s ? s[0].toUpperCase() + s.slice(1) : 'All statuses'}</option>
+          <option value={s} selected={s === status}>{s ? s[0].toUpperCase() + s.slice(1) : t('f.all_statuses')}</option>
         ))}
       </select>
     </div>
     <div class="field">
-      <label>Search order #</label>
+      <label>{t('f.search_order')}</label>
       <input class="input" type="text" name="search" value={search} placeholder="SO-…" />
     </div>
-    <button class="btn btn-primary" type="submit">Apply</button>
-    {(status || search) && <a class="btn btn-ghost" href="/orders">Reset</a>}
+    <button class="btn btn-primary" type="submit">{t('f.apply')}</button>
+    {(status || search) && <a class="btn btn-ghost" href="/orders">{t('f.reset')}</a>}
   </form>
 
   {error && <div class="panel panel-pad" style="color:var(--rose)">API error: {error}</div>}
@@ -53,19 +50,17 @@ const statuses = ['', 'pending', 'loaded', 'delivered', 'cancelled'];
     <table>
       <thead>
         <tr>
-          <th>Order #</th>
-          <th>Customer</th>
-          <th>Route</th>
-          <th>Ordered</th>
-          <th>Delivered</th>
-          <th>Status</th>
-          <th class="r">Total</th>
+          <th>{t('col.order_no')}</th>
+          <th>{t('col.customer')}</th>
+          <th>{t('col.route')}</th>
+          <th>{t('col.ordered')}</th>
+          <th>{t('col.delivered')}</th>
+          <th>{t('col.status')}</th>
+          <th class="r">{t('col.total')}</th>
         </tr>
       </thead>
       <tbody>
-        {orders.length === 0 && (
-          <tr><td colspan="7" class="empty">No orders match.</td></tr>
-        )}
+        {orders.length === 0 && <tr><td colspan="7" class="empty">{t('rep.none')}</td></tr>}
         {orders.map((o) => (
           <tr>
             <td class="cell-mono">{o.order_no}</td>
@@ -81,7 +76,7 @@ const statuses = ['', 'pending', 'loaded', 'delivered', 'cancelled'];
       {orders.length > 0 && (
         <tfoot>
           <tr>
-            <td colspan="6">Total — {orders.length} orders</td>
+            <td colspan="6">{t('rep.total_line')} — {orders.length}</td>
             <td class="r tabnum">{money(total)}</td>
           </tr>
         </tfoot>

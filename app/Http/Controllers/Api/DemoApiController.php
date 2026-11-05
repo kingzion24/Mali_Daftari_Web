@@ -10,6 +10,8 @@ use App\Models\Invoice;
 use App\Models\Lead;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\StandingOrder;
+use App\Models\Task;
 use App\Models\Truck;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -63,6 +65,30 @@ class DemoApiController extends Controller
             ->get()
             ->map(fn ($r) => ['route' => $r->route, 'value' => (float) $r->total_sales]);
 
+        $overdueInvoices = Invoice::where('status', 'overdue')
+            ->with('customer:id,name')
+            ->orderByDesc('amount')
+            ->limit(6)
+            ->get()
+            ->map(fn (Invoice $i) => [
+                'invoice_no' => $i->invoice_no,
+                'customer' => $i->customer?->name,
+                'amount' => (float) $i->amount,
+                'due_date' => $i->due_date?->toDateString(),
+            ]);
+
+        $upcomingStanding = StandingOrder::where('active', true)
+            ->with(['customer:id,name', 'route:id,name'])
+            ->orderBy('next_delivery')
+            ->limit(6)
+            ->get()
+            ->map(fn (StandingOrder $s) => [
+                'customer' => $s->customer?->name,
+                'route' => $s->route?->name,
+                'frequency' => $s->frequency,
+                'next_delivery' => $s->next_delivery?->toDateString(),
+            ]);
+
         return response()->json([
             'kpis' => [
                 'revenue' => $revenue,
@@ -73,10 +99,51 @@ class DemoApiController extends Controller
                 'issued' => $issued,
                 'returned' => $returned,
                 'trucks' => Truck::count(),
+                'open_tasks' => Task::where('done', false)->count(),
             ],
             'trend' => $trend,
             'by_route' => $byRoute,
+            'overdue_invoices' => $overdueInvoices,
+            'upcoming_standing' => $upcomingStanding,
         ]);
+    }
+
+    public function invoices(): JsonResponse
+    {
+        $invoices = Invoice::query()
+            ->with('customer:id,name')
+            ->orderByDesc('issue_date')
+            ->limit(200)
+            ->get()
+            ->map(fn (Invoice $i) => [
+                'invoice_no' => $i->invoice_no,
+                'customer' => $i->customer?->name,
+                'issue_date' => $i->issue_date?->toDateString(),
+                'due_date' => $i->due_date?->toDateString(),
+                'amount' => (float) $i->amount,
+                'amount_paid' => (float) $i->amount_paid,
+                'status' => $i->status,
+            ]);
+
+        return response()->json(['invoices' => $invoices]);
+    }
+
+    public function standingOrders(): JsonResponse
+    {
+        $orders = StandingOrder::query()
+            ->with(['customer:id,name', 'route:id,name', 'items'])
+            ->orderBy('next_delivery')
+            ->get()
+            ->map(fn (StandingOrder $s) => [
+                'customer' => $s->customer?->name,
+                'route' => $s->route?->name,
+                'frequency' => $s->frequency,
+                'next_delivery' => $s->next_delivery?->toDateString(),
+                'active' => (bool) $s->active,
+                'bottles' => (int) $s->items->sum('quantity'),
+            ]);
+
+        return response()->json(['standing_orders' => $orders]);
     }
 
     public function orders(Request $request): JsonResponse

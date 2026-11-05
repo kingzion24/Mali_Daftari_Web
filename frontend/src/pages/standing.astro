@@ -1,0 +1,47 @@
+---
+import Base from '../layouts/Base.astro';
+import { num, shortDate, api } from '../lib/api';
+import { getLocale, makeT } from '../lib/i18n';
+
+const t = makeT(getLocale(Astro));
+
+let orders: any[] = [];
+let error: string | null = null;
+try {
+  const data = await api('/standing-orders');
+  orders = data.standing_orders ?? [];
+} catch (e) {
+  error = (e as Error).message;
+}
+---
+
+<Base title={t('nav.standing')} subtitle={t('standing.sub')}>
+  {error && <div class="panel panel-pad" style="color:var(--rose)">API error: {error}</div>}
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>{t('col.customer')}</th>
+          <th>{t('col.route')}</th>
+          <th>{t('col.frequency')}</th>
+          <th class="r">{t('col.bottles')}</th>
+          <th>{t('col.next_delivery')}</th>
+          <th>{t('col.active')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {orders.map((s) => (
+          <tr>
+            <td class="cell-strong">{s.customer}</td>
+            <td class="cell-dim">{s.route ?? '—'}</td>
+            <td><span class="badge gray">{s.frequency}</span></td>
+            <td class="r tabnum">{num(s.bottles)}</td>
+            <td>{shortDate(s.next_delivery)}</td>
+            <td><span class={`badge ${s.active ? 'green' : 'gray'}`}>{s.active ? t('misc.yes') : t('misc.no')}</span></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</Base>

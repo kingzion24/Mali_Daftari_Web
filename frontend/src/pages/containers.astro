@@ -1,6 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
 import { api, money, num, shortDate } from '../lib/api';
+import { getLocale, makeT } from '../lib/i18n';
+
+const t = makeT(getLocale(Astro));
 
 let summary: any = null;
 let rows: any[] = [];
@@ -17,31 +20,29 @@ const returnRate = summary && summary.issued > 0 ? Math.round((summary.returned 
 const outClass = (n: number) => (n >= 100 ? 'rose' : n >= 50 ? 'amber' : 'green');
 ---
 
-<Base title="Container Ledger" subtitle="Every 20L bottle issued must come back">
+<Base title={t('nav.containers')} subtitle={t('containers.sub')}>
   {error && <div class="panel panel-pad" style="color:var(--rose)">API error: {error}</div>}
 
   {summary && (
     <>
-      <div class="grid grid-4">
-        <div class="kpi">
-          <div class="label">Bottles in the field</div>
+      <div class="stats rise rise-1">
+        <div class="stat">
+          <div class="label">{t('col.outstanding')}</div>
           <div class="value accent tabnum">{num(summary.outstanding)}</div>
-          <div class="meta">{num(summary.issued)} issued · {num(summary.returned)} returned</div>
+          <div class="meta">{num(summary.issued)} {t('col.issued')} · {num(summary.returned)} {t('col.returned')}</div>
         </div>
-        <div class="kpi">
-          <div class="label">Deposit held</div>
+        <div class="stat">
+          <div class="label">{t('col.deposit')}</div>
           <div class="value tabnum">{money(summary.deposit_held)}</div>
-          <div class="meta">refundable against returns</div>
         </div>
-        <div class="kpi">
-          <div class="label">Return rate</div>
+        <div class="stat">
+          <div class="label">{t('kpi.return_rate')}</div>
           <div class="value tabnum">{returnRate}%</div>
-          <div class="meta">empties recovered</div>
         </div>
-        <div class="kpi">
-          <div class="label">Accounts to chase</div>
+        <div class="stat">
+          <div class="label">{t('sec.overdue_invoices')}</div>
           <div class={`value tabnum ${summary.high > 0 ? 'rose' : 'emerald'}`}>{summary.high}</div>
-          <div class="meta">100+ bottles unreturned</div>
+          <div class="meta">100+ {t('col.outstanding').toLowerCase()}</div>
         </div>
       </div>
 
@@ -49,13 +50,13 @@ const outClass = (n: number) => (n >= 100 ? 'rose' : n >= 50 ? 'amber' : 'green'
         <table>
           <thead>
             <tr>
-              <th>Customer</th>
-              <th>Route</th>
-              <th class="r">Issued</th>
-              <th class="r">Returned</th>
-              <th class="r">Outstanding</th>
-              <th class="r">Deposit held</th>
-              <th>Last movement</th>
+              <th>{t('col.customer')}</th>
+              <th>{t('col.route')}</th>
+              <th class="r">{t('col.issued')}</th>
+              <th class="r">{t('col.returned')}</th>
+              <th class="r">{t('col.outstanding')}</th>
+              <th class="r">{t('col.deposit')}</th>
+              <th>{t('col.last_move')}</th>
             </tr>
           </thead>
           <tbody>

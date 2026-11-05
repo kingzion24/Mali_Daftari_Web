@@ -1,6 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
-import { api, money, num } from '../lib/api';
+import { api, money, num, shortDate } from '../lib/api';
+import { getLocale, makeT } from '../lib/i18n';
+
+const t = makeT(getLocale(Astro));
 
 let data: any = null;
 let error: string | null = null;
@@ -13,63 +16,95 @@ try {
 const k = data?.kpis;
 const trend: { label: string; value: number }[] = data?.trend ?? [];
 const byRoute: { route: string; value: number }[] = data?.by_route ?? [];
-const maxTrend = Math.max(1, ...trend.map((t) => t.value));
+const overdue: any[] = data?.overdue_invoices ?? [];
+const upcoming: any[] = data?.upcoming_standing ?? [];
+const maxTrend = Math.max(1, ...trend.map((x) => x.value));
 const maxRoute = Math.max(1, ...byRoute.map((r) => r.value));
 const returnRate = k && k.issued > 0 ? Math.round((k.returned / k.issued) * 100) : 0;
 ---
 
-<Base title="Dashboard" subtitle="Living Water — last 30 days">
-  {error && <div class="panel panel-pad" style="color:var(--rose)">Couldn’t reach the API: {error}. Is <code>php artisan serve</code> running on :8000?</div>}
+<Base title={t('nav.dashboard')} subtitle={t('dash.sub')}>
+  {error && <div class="panel panel-pad" style="color:var(--rose)">API error: {error}. Is <code>php artisan serve</code> running on :8000?</div>}
 
   {k && (
     <>
-      <div class="grid grid-4">
-        <div class="kpi">
-          <div class="label">Revenue (30 days)</div>
+      <div class="stats rise rise-1">
+        <div class="stat">
+          <div class="label">{t('kpi.revenue')}</div>
           <div class="value accent tabnum">{money(k.revenue)}</div>
-          <div class="meta">{num(k.deliveries)} deliveries completed</div>
+          <div class="meta">{num(k.deliveries)} {t('kpi.deliveries')}</div>
         </div>
-        <div class="kpi">
-          <div class="label">Receivables outstanding</div>
+        <div class="stat">
+          <div class="label">{t('kpi.receivables')}</div>
           <div class="value tabnum">{money(k.receivables)}</div>
-          <div class="meta">{num(k.overdue)} invoices overdue</div>
+          <div class="meta">{num(k.overdue)} {t('kpi.overdue')}</div>
         </div>
-        <div class="kpi">
-          <div class="label">20L bottles in the field</div>
+        <div class="stat">
+          <div class="label">{t('kpi.bottles')}</div>
           <div class="value accent tabnum">{num(k.containers_out)}</div>
-          <div class="meta">{num(k.issued)} issued · {num(k.returned)} returned</div>
+          <div class="meta">{num(k.issued)} {t('col.issued')} · {num(k.returned)} {t('col.returned')}</div>
         </div>
-        <div class="kpi">
-          <div class="label">Container return rate</div>
+        <div class="stat">
+          <div class="label">{t('kpi.return_rate')}</div>
           <div class="value emerald tabnum">{returnRate}%</div>
-          <div class="meta">{num(k.trucks)} trucks on the road</div>
+          <div class="meta">{num(k.trucks)} {t('kpi.trucks')}</div>
         </div>
       </div>
 
-      <div class="grid grid-3" style="margin-top:18px">
+      <div class="grid grid-3 rise rise-2" style="margin-top:18px">
         <div class="panel panel-pad" style="grid-column: span 2">
-          <div class="section-title">Sales trend — last 12 weeks</div>
+          <div class="section-title">{t('sec.trend')}</div>
           <div class="bars">
-            {trend.map((t) => (
-              <div class="bar-col" title={money(t.value)}>
-                <div class="bar" style={`height:${Math.max(3, (t.value / maxTrend) * 100)}%`}></div>
-                <div class="bar-label">{t.label}</div>
+            {trend.map((x) => (
+              <div class="bar-col" title={money(x.value)}>
+                <div class="bar" style={`height:${Math.max(3, (x.value / maxTrend) * 100)}%`}></div>
+                <div class="bar-label">{x.label}</div>
               </div>
             ))}
           </div>
         </div>
 
         <div class="panel panel-pad">
-          <div class="section-title">Sales by route</div>
+          <div class="section-title">{t('sec.by_route')}</div>
           {byRoute.map((r) => (
             <div style="margin-bottom:12px">
               <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
                 <span>{r.route}</span>
                 <span class="tabnum muted">{money(r.value)}</span>
               </div>
-              <div style="height:7px;border-radius:999px;background:#f0f0f3;overflow:hidden">
+              <div style="height:7px;border-radius:999px;background:var(--hover);overflow:hidden">
                 <div style={`height:100%;width:${(r.value / maxRoute) * 100}%;background:linear-gradient(90deg,#0a84ff,#5e5ce6);border-radius:999px`}></div>
               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div class="grid grid-2 rise rise-3" style="margin-top:18px">
+        <div class="panel panel-pad">
+          <div class="section-title">{t('sec.overdue_invoices')}</div>
+          {overdue.length === 0 && <div class="muted" style="font-size:13px">{t('sec.none')}</div>}
+          {overdue.map((inv) => (
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--hairline)">
+              <div>
+                <div style="font-weight:600;font-size:14px">{inv.customer}</div>
+                <div class="muted" style="font-size:12px"><span class="cell-mono">{inv.invoice_no}</span> · {t('sec.due')} {shortDate(inv.due_date)}</div>
+              </div>
+              <div class="tabnum" style="color:var(--rose);font-weight:600">{money(inv.amount)}</div>
+            </div>
+          ))}
+        </div>
+
+        <div class="panel panel-pad">
+          <div class="section-title">{t('sec.upcoming')}</div>
+          {upcoming.length === 0 && <div class="muted" style="font-size:13px">{t('sec.none')}</div>}
+          {upcoming.map((s) => (
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--hairline)">
+              <div>
+                <div style="font-weight:600;font-size:14px">{s.customer}</div>
+                <div class="muted" style="font-size:12px">{s.route} · {s.frequency}</div>
+              </div>
+              <div class="badge blue">{t('sec.next')} {shortDate(s.next_delivery)}</div>
             </div>
           ))}
         </div>

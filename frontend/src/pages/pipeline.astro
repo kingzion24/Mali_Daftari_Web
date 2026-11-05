@@ -1,7 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
 import { api, money } from '../lib/api';
+import { getLocale, makeT } from '../lib/i18n';
 
+const t = makeT(getLocale(Astro));
 let columns: any[] = [];
 let error: string | null = null;
 try {
@@ -21,7 +23,7 @@ const colAccent: Record<string, string> = {
 };
 ---
 
-<Base title="Sales Pipeline" subtitle="New prospects → won accounts">
+<Base title={t('nav.pipeline')} subtitle={t('pipeline.sub')}>
   {error && <div class="panel panel-pad" style="color:var(--rose)">API error: {error}</div>}
 
   <div class="kanban">

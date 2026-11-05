@@ -1,7 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
 import { api, money, num, shortDate, API_BASE } from '../lib/api';
+import { getLocale, makeT } from '../lib/i18n';
 
+const t = makeT(getLocale(Astro));
 const url = Astro.url;
 const today = new Date().toISOString().slice(0, 10);
 const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
@@ -22,50 +24,50 @@ try {
 const csvHref = `${API_BASE}/report.csv?from=${from}&to=${to}`;
 ---
 
-<Base title="Sales Report" subtitle="Delivered sales for a chosen period">
+<Base title={t('nav.report')} subtitle={t('report.sub')}>
   <form class="toolbar no-print" method="get">
     <div class="field">
-      <label>From</label>
+      <label>{t('f.from')}</label>
       <input class="input" type="date" name="from" value={from} />
     </div>
     <div class="field">
-      <label>To</label>
+      <label>{t('f.to')}</label>
       <input class="input" type="date" name="to" value={to} />
     </div>
-    <button class="btn btn-primary" type="submit">Generate</button>
+    <button class="btn btn-primary" type="submit">{t('f.generate')}</button>
     <div class="spacer"></div>
-    <a class="btn btn-ghost" href={csvHref}>Download CSV</a>
-    <button class="btn btn-ghost" type="button" id="printBtn">Print / Save as PDF</button>
+    <a class="btn btn-ghost" href={csvHref}>{t('f.download_csv')}</a>
+    <button class="btn btn-ghost" type="button" id="printBtn">{t('f.print')}</button>
   </form>
 
   {error && <div class="panel panel-pad" style="color:var(--rose)">API error: {error}</div>}
 
   <div class="print-head" style="display:none">
-    <h2 style="font-size:20px">Living Water — Sales Report</h2>
-    <p class="muted">Period: {from} to {to}</p>
+    <h2 style="font-size:20px">Living Water — {t('nav.report')}</h2>
+    <p class="muted">{from} → {to}</p>
   </div>
 
   {summary && (
     <>
-      <div class="grid grid-3">
-        <div class="kpi"><div class="label">Deliveries</div><div class="value tabnum">{num(summary.count)}</div></div>
-        <div class="kpi"><div class="label">Total revenue</div><div class="value accent tabnum">{money(summary.revenue)}</div></div>
-        <div class="kpi"><div class="label">Average order</div><div class="value tabnum">{money(summary.average)}</div></div>
+      <div class="stats" style="--cols:3">
+        <div class="stat"><div class="label">{t('rep.deliveries')}</div><div class="value tabnum">{num(summary.count)}</div></div>
+        <div class="stat"><div class="label">{t('rep.total_revenue')}</div><div class="value accent tabnum">{money(summary.revenue)}</div></div>
+        <div class="stat"><div class="label">{t('rep.avg_order')}</div><div class="value tabnum">{money(summary.average)}</div></div>
       </div>
 
       <div class="table-wrap" style="margin-top:18px">
         <table>
           <thead>
             <tr>
-              <th>Order #</th>
-              <th>Date</th>
-              <th>Customer</th>
-              <th>Route</th>
-              <th class="r">Total</th>
+              <th>{t('col.order_no')}</th>
+              <th>{t('col.date')}</th>
+              <th>{t('col.customer')}</th>
+              <th>{t('col.route')}</th>
+              <th class="r">{t('col.total')}</th>
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && <tr><td colspan="5" class="empty">No deliveries in this period.</td></tr>}
+            {rows.length === 0 && <tr><td colspan="5" class="empty">{t('rep.none')}</td></tr>}
             {rows.map((r) => (
               <tr>
                 <td class="cell-mono">{r.order_no}</td>
@@ -78,7 +80,7 @@ const csvHref = `${API_BASE}/report.csv?from=${from}&to=${to}`;
           </tbody>
           {rows.length > 0 && (
             <tfoot>
-              <tr><td colspan="4">Total — {num(summary.count)} deliveries</td><td class="r tabnum">{money(summary.revenue)}</td></tr>
+              <tr><td colspan="4">{t('rep.total_line')} — {num(summary.count)}</td><td class="r tabnum">{money(summary.revenue)}</td></tr>
             </tfoot>
           )}
         </table>

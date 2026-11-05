@@ -1,6 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
 import { api, money } from '../lib/api';
+import { getLocale, makeT } from '../lib/i18n';
+
+const t = makeT(getLocale(Astro));
 
 let customers: any[] = [];
 let error: string | null = null;
@@ -11,28 +14,22 @@ try {
   error = (e as Error).message;
 }
 
-const typeClass: Record<string, string> = {
-  distributor: 'blue',
-  hotel: 'amber',
-  office: 'blue',
-  retailer: 'green',
-  household: 'gray',
-};
+const typeClass: Record<string, string> = { distributor: 'blue', hotel: 'amber', office: 'blue', retailer: 'green', household: 'gray' };
 ---
 
-<Base title="Customers" subtitle={`${customers.length} B2B & household accounts`}>
+<Base title={t('nav.customers')} subtitle={`${customers.length} — ${t('customers.sub')}`}>
   {error && <div class="panel panel-pad" style="color:var(--rose)">API error: {error}</div>}
 
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
-          <th>Business</th>
-          <th>Type</th>
-          <th>Route</th>
-          <th>Tier</th>
-          <th class="r">Credit limit</th>
-          <th class="r">Balance owed</th>
+          <th>{t('col.business')}</th>
+          <th>{t('col.type')}</th>
+          <th>{t('col.route')}</th>
+          <th>{t('col.tier')}</th>
+          <th class="r">{t('col.credit')}</th>
+          <th class="r">{t('col.balance')}</th>
         </tr>
       </thead>
       <tbody>

@@ -1,0 +1,107 @@
+---
+import '../styles/app.css';
+
+interface Props {
+  title: string;
+  subtitle?: string;
+}
+const { title, subtitle } = Astro.props;
+const path = Astro.url.pathname;
+const isActive = (href: string) =>
+  href === '/' ? path === '/' : path.startsWith(href);
+
+const nav = [
+  {
+    group: 'Overview',
+    items: [{ href: '/', label: 'Dashboard', icon: 'grid' }],
+  },
+  {
+    group: 'Distribution',
+    items: [
+      { href: '/orders', label: 'Orders', icon: 'cart' },
+      { href: '/containers', label: 'Container Ledger', icon: 'cycle' },
+    ],
+  },
+  {
+    group: 'Sales & Finance',
+    items: [
+      { href: '/report', label: 'Sales Report', icon: 'chart' },
+      { href: '/customers', label: 'Customers', icon: 'store' },
+    ],
+  },
+  {
+    group: 'CRM',
+    items: [{ href: '/pipeline', label: 'Sales Pipeline', icon: 'columns' }],
+  },
+];
+
+const icons: Record<string, string> = {
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  cart: '<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.2 12.3a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.2L21 7H6"/>',
+  cycle: '<path d="M3 11a8 8 0 0 1 14-5m1 0V3m0 3h-3"/><path d="M21 13a8 8 0 0 1-14 5m-1 0v3m0-3h3"/>',
+  chart: '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>',
+  store: '<path d="M3 9l1-5h16l1 5"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><path d="M9 20v-6h6v6"/>',
+  columns: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="14" rx="1.5"/>',
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · Living Water</title>
+    <meta name="description" content="Living Water — water distribution operations" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">LW</div>
+          <div>
+            <div class="brand-name">Living Water</div>
+            <div class="brand-sub">Distribution</div>
+          </div>
+        </div>
+
+        {
+          nav.map((section) => (
+            <>
+              <div class="nav-group-label">{section.group}</div>
+              {section.items.map((item) => (
+                <a
+                  href={item.href}
+                  class={`nav-item${isActive(item.href) ? ' active' : ''}`}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    set:html={icons[item.icon]}
+                  />
+                  <span>{item.label}</span>
+                </a>
+              ))}
+            </>
+          ))
+        }
+      </aside>
+
+      <div class="main">
+        <header class="topbar">
+          <div>
+            <h1>{title}</h1>
+            {subtitle && <div class="sub">{subtitle}</div>}
+          </div>
+          <div><slot name="actions" /></div>
+        </header>
+        <main class="content">
+          <slot />
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

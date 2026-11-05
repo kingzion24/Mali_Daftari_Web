@@ -1,0 +1,79 @@
+---
+import Base from '../layouts/Base.astro';
+import { api, money, num } from '../lib/api';
+
+let data: any = null;
+let error: string | null = null;
+try {
+  data = await api('/dashboard');
+} catch (e) {
+  error = (e as Error).message;
+}
+
+const k = data?.kpis;
+const trend: { label: string; value: number }[] = data?.trend ?? [];
+const byRoute: { route: string; value: number }[] = data?.by_route ?? [];
+const maxTrend = Math.max(1, ...trend.map((t) => t.value));
+const maxRoute = Math.max(1, ...byRoute.map((r) => r.value));
+const returnRate = k && k.issued > 0 ? Math.round((k.returned / k.issued) * 100) : 0;
+---
+
+<Base title="Dashboard" subtitle="Living Water — last 30 days">
+  {error && <div class="panel panel-pad" style="color:var(--rose)">Couldn’t reach the API: {error}. Is <code>php artisan serve</code> running on :8000?</div>}
+
+  {k && (
+    <>
+      <div class="grid grid-4">
+        <div class="kpi">
+          <div class="label">Revenue (30 days)</div>
+          <div class="value accent tabnum">{money(k.revenue)}</div>
+          <div class="meta">{num(k.deliveries)} deliveries completed</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Receivables outstanding</div>
+          <div class="value tabnum">{money(k.receivables)}</div>
+          <div class="meta">{num(k.overdue)} invoices overdue</div>
+        </div>
+        <div class="kpi">
+          <div class="label">20L bottles in the field</div>
+          <div class="value accent tabnum">{num(k.containers_out)}</div>
+          <div class="meta">{num(k.issued)} issued · {num(k.returned)} returned</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Container return rate</div>
+          <div class="value emerald tabnum">{returnRate}%</div>
+          <div class="meta">{num(k.trucks)} trucks on the road</div>
+        </div>
+      </div>
+
+      <div class="grid grid-3" style="margin-top:18px">
+        <div class="panel panel-pad" style="grid-column: span 2">
+          <div class="section-title">Sales trend — last 12 weeks</div>
+          <div class="bars">
+            {trend.map((t) => (
+              <div class="bar-col" title={money(t.value)}>
+                <div class="bar" style={`height:${Math.max(3, (t.value / maxTrend) * 100)}%`}></div>
+                <div class="bar-label">{t.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div class="panel panel-pad">
+          <div class="section-title">Sales by route</div>
+          {byRoute.map((r) => (
+            <div style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+                <span>{r.route}</span>
+                <span class="tabnum muted">{money(r.value)}</span>
+              </div>
+              <div style="height:7px;border-radius:999px;background:#f0f0f3;overflow:hidden">
+                <div style={`height:100%;width:${(r.value / maxRoute) * 100}%;background:linear-gradient(90deg,#0a84ff,#5e5ce6);border-radius:999px`}></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  )}
+</Base>

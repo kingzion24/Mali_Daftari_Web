@@ -1,0 +1,79 @@
+---
+import Base from '../layouts/Base.astro';
+import { api, money } from '../lib/api';
+
+let columns: any[] = [];
+let error: string | null = null;
+try {
+  const data = await api('/pipeline');
+  columns = data.columns ?? [];
+} catch (e) {
+  error = (e as Error).message;
+}
+
+const colAccent: Record<string, string> = {
+  new: '#aeaeb2',
+  contacted: '#0a84ff',
+  qualified: '#30a4e6',
+  proposal: '#c77d00',
+  won: '#30a46c',
+  lost: '#e5484d',
+};
+---
+
+<Base title="Sales Pipeline" subtitle="New prospects → won accounts">
+  {error && <div class="panel panel-pad" style="color:var(--rose)">API error: {error}</div>}
+
+  <div class="kanban">
+    {columns.map((col) => (
+      <div class="col">
+        <div class="col-head" style={`--col-accent:${colAccent[col.key] ?? '#aeaeb2'}`}>
+          <div class="col-title">{col.label}</div>
+          <div class="col-meta">
+            <b>{money(col.value)}</b>
+            {col.count} leads
+          </div>
+        </div>
+        <div class="col-body">
+          {col.leads.length === 0 && <div class="muted" style="font-size:12px;text-align:center;padding:16px 0">No leads</div>}
+          {col.leads.map((lead: any) => (
+            <div class="lead-card">
+              <div class="lead-top">
+                <div class="lead-name">{lead.name}</div>
+                <span class="badge gray" style="font-size:10px">{lead.source.replace('_', ' ')}</span>
+              </div>
+              <div class="lead-value tabnum">{money(lead.estimated_value)}</div>
+              <div class="lead-foot">
+                <span class="lead-owner">{lead.owner}{lead.route ? ' · ' + lead.route : ''}</span>
+                <div class="move">
+                  <button type="button" data-id={lead.id} data-dir="backward" title="Move back">←</button>
+                  <button type="button" class="fwd" data-id={lead.id} data-dir="forward" title="Move forward">→</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <script>
+    document.querySelectorAll<HTMLButtonElement>('.move button').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const direction = btn.dataset.dir;
+        btn.disabled = true;
+        try {
+          await fetch('/api/move', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, direction }),
+          });
+          location.reload();
+        } catch {
+          btn.disabled = false;
+        }
+      });
+    });
+  </script>
+</Base>

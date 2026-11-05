@@ -1,0 +1,91 @@
+---
+import Base from '../layouts/Base.astro';
+import { api, money, shortDate } from '../lib/api';
+
+const url = Astro.url;
+const status = url.searchParams.get('status') ?? '';
+const search = url.searchParams.get('search') ?? '';
+
+const qs = new URLSearchParams();
+if (status) qs.set('status', status);
+if (search) qs.set('search', search);
+
+let orders: any[] = [];
+let error: string | null = null;
+try {
+  const data = await api(`/orders${qs.toString() ? '?' + qs.toString() : ''}`);
+  orders = data.orders ?? [];
+} catch (e) {
+  error = (e as Error).message;
+}
+
+const total = orders.reduce((s, o) => s + Number(o.total), 0);
+const badgeClass: Record<string, string> = {
+  delivered: 'green',
+  loaded: 'blue',
+  pending: 'gray',
+  cancelled: 'rose',
+};
+const statuses = ['', 'pending', 'loaded', 'delivered', 'cancelled'];
+---
+
+<Base title="Orders" subtitle="Refill deliveries">
+  <form class="toolbar" method="get">
+    <div class="field">
+      <label>Status</label>
+      <select class="input" name="status">
+        {statuses.map((s) => (
+          <option value={s} selected={s === status}>{s ? s[0].toUpperCase() + s.slice(1) : 'All statuses'}</option>
+        ))}
+      </select>
+    </div>
+    <div class="field">
+      <label>Search order #</label>
+      <input class="input" type="text" name="search" value={search} placeholder="SO-…" />
+    </div>
+    <button class="btn btn-primary" type="submit">Apply</button>
+    {(status || search) && <a class="btn btn-ghost" href="/orders">Reset</a>}
+  </form>
+
+  {error && <div class="panel panel-pad" style="color:var(--rose)">API error: {error}</div>}
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Customer</th>
+          <th>Route</th>
+          <th>Ordered</th>
+          <th>Delivered</th>
+          <th>Status</th>
+          <th class="r">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {orders.length === 0 && (
+          <tr><td colspan="7" class="empty">No orders match.</td></tr>
+        )}
+        {orders.map((o) => (
+          <tr>
+            <td class="cell-mono">{o.order_no}</td>
+            <td class="cell-strong">{o.customer}</td>
+            <td class="cell-dim">{o.route}</td>
+            <td>{shortDate(o.order_date)}</td>
+            <td class="cell-dim">{shortDate(o.delivery_date)}</td>
+            <td><span class={`badge ${badgeClass[o.status] ?? 'gray'}`}>{o.status}</span></td>
+            <td class="r tabnum">{money(o.total)}</td>
+          </tr>
+        ))}
+      </tbody>
+      {orders.length > 0 && (
+        <tfoot>
+          <tr>
+            <td colspan="6">Total — {orders.length} orders</td>
+            <td class="r tabnum">{money(total)}</td>
+          </tr>
+        </tfoot>
+      )}
+    </table>
+  </div>
+</Base>

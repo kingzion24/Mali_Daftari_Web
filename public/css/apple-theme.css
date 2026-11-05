@@ -1,0 +1,155 @@
+/* ──────────────────────────────────────────────────────────────
+   Living Water — Apple "Liquid Glass" skin for the Filament panel.
+   Calm cool ground · unified white surfaces · hairline dividers ·
+   glass only on the chrome that overlaps content (sidebar, topbar).
+   Tokens mirror the apple-liquid-glass design system.
+   ────────────────────────────────────────────────────────────── */
+:root {
+    --lw-bg: #f5f5f7;
+    --lw-surface: #ffffff;
+    --lw-hairline: rgba(0, 0, 0, 0.07);
+    --lw-text: #1d1d1f;
+    --lw-text-2: #6e6e73;
+    --lw-r-card: 18px;
+    --lw-r-panel: 22px;
+    --lw-sh-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.05);
+    --lw-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+        "Helvetica Neue", "Segoe UI", "PingFang SC", sans-serif;
+    --lw-ease: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* SF-style system typography across the whole panel */
+.fi-body,
+.fi-body * {
+    font-family: var(--lw-font);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Cool grey-white ground */
+.fi-body {
+    background-color: var(--lw-bg);
+}
+
+/* Page titles: tighter tracking like Apple display text */
+.fi-header-heading,
+.fi-page .fi-header h1 {
+    letter-spacing: -0.02em;
+}
+
+/* Tabular figures wherever numbers matter */
+.fi-ta-text,
+.fi-wi-stats-overview-stat-value {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Glass chrome: sidebar + topbar are the only layers that overlap content ── */
+.fi-sidebar,
+.fi-sidebar-header {
+    background-color: rgba(255, 255, 255, 0.72) !important;
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-right: 1px solid var(--lw-hairline);
+}
+
+.fi-topbar > * {
+    background-color: rgba(245, 245, 247, 0.72) !important;
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--lw-hairline);
+}
+
+/* Sidebar nav: pill active state, calm hover */
+.fi-sidebar-item-button {
+    border-radius: 10px;
+    transition: background-color 180ms var(--lw-ease);
+}
+
+.fi-sidebar-group-label {
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    color: var(--lw-text-2);
+}
+
+/* ── Solid white surfaces: sections, widgets, tables ── */
+.fi-section,
+.fi-wi-stats-overview-stat,
+.fi-ta-ctn,
+.fi-fo-component-ctn .fi-section,
+.fi-modal-window {
+    border-radius: var(--lw-r-panel) !important;
+    box-shadow: var(--lw-sh-card) !important;
+    border: 1px solid var(--lw-hairline) !important;
+}
+
+.fi-wi-stats-overview-stat {
+    transition: transform 200ms var(--lw-ease), box-shadow 200ms var(--lw-ease);
+}
+
+.fi-wi-stats-overview-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Buttons & inputs: softer, rounder, Apple-calm */
+.fi-btn {
+    border-radius: 10px;
+}
+
+.fi-input,
+.fi-select-input,
+.fi-fo-field-wrp .fi-input-wrp {
+    border-radius: 10px;
+}
+
+/* Table rows: gentle hover, hairline rhythm */
+.fi-ta-row {
+    transition: background-color 150ms var(--lw-ease);
+}
+
+/* Login card: a floating glass panel */
+.fi-simple-main {
+    border-radius: 24px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 30px 80px rgba(0, 0, 0, 0.12) !important;
+    border: 1px solid var(--lw-hairline) !important;
+    background-color: rgba(255, 255, 255, 0.86);
+    backdrop-filter: saturate(180%) blur(24px);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+}
+
+/* Dark mode: keep the calm, switch the ground */
+.dark .fi-body {
+    background-color: #000000;
+}
+
+.dark .fi-sidebar,
+.dark .fi-sidebar-header {
+    background-color: rgba(28, 28, 30, 0.72) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark .fi-topbar > * {
+    background-color: rgba(28, 28, 30, 0.72) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark .fi-section,
+.dark .fi-wi-stats-overview-stat,
+.dark .fi-ta-ctn,
+.dark .fi-modal-window {
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .fi-wi-stats-overview-stat,
+    .fi-sidebar-item-button,
+    .fi-ta-row {
+        transition: none;
+    }
+    .fi-wi-stats-overview-stat:hover {
+        transform: none;
+    }
+}

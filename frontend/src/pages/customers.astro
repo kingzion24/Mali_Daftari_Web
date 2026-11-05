@@ -1,0 +1,52 @@
+---
+import Base from '../layouts/Base.astro';
+import { api, money } from '../lib/api';
+
+let customers: any[] = [];
+let error: string | null = null;
+try {
+  const data = await api('/customers');
+  customers = data.customers ?? [];
+} catch (e) {
+  error = (e as Error).message;
+}
+
+const typeClass: Record<string, string> = {
+  distributor: 'blue',
+  hotel: 'amber',
+  office: 'blue',
+  retailer: 'green',
+  household: 'gray',
+};
+---
+
+<Base title="Customers" subtitle={`${customers.length} B2B & household accounts`}>
+  {error && <div class="panel panel-pad" style="color:var(--rose)">API error: {error}</div>}
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Business</th>
+          <th>Type</th>
+          <th>Route</th>
+          <th>Tier</th>
+          <th class="r">Credit limit</th>
+          <th class="r">Balance owed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {customers.map((c) => (
+          <tr>
+            <td class="cell-strong">{c.name}</td>
+            <td><span class={`badge ${typeClass[c.type] ?? 'gray'}`}>{c.type}</span></td>
+            <td class="cell-dim">{c.route ?? '—'}</td>
+            <td><span class="badge gray">{c.price_tier}</span></td>
+            <td class="r tabnum">{money(c.credit_limit)}</td>
+            <td class="r tabnum" style={Number(c.balance) > 0 ? 'color:var(--rose);font-weight:600' : 'color:var(--emerald)'}>{money(c.balance)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</Base>

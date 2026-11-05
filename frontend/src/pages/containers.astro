@@ -1,0 +1,78 @@
+---
+import Base from '../layouts/Base.astro';
+import { api, money, num, shortDate } from '../lib/api';
+
+let summary: any = null;
+let rows: any[] = [];
+let error: string | null = null;
+try {
+  const data = await api('/containers');
+  summary = data.summary;
+  rows = data.rows ?? [];
+} catch (e) {
+  error = (e as Error).message;
+}
+
+const returnRate = summary && summary.issued > 0 ? Math.round((summary.returned / summary.issued) * 100) : 0;
+const outClass = (n: number) => (n >= 100 ? 'rose' : n >= 50 ? 'amber' : 'green');
+---
+
+<Base title="Container Ledger" subtitle="Every 20L bottle issued must come back">
+  {error && <div class="panel panel-pad" style="color:var(--rose)">API error: {error}</div>}
+
+  {summary && (
+    <>
+      <div class="grid grid-4">
+        <div class="kpi">
+          <div class="label">Bottles in the field</div>
+          <div class="value accent tabnum">{num(summary.outstanding)}</div>
+          <div class="meta">{num(summary.issued)} issued · {num(summary.returned)} returned</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Deposit held</div>
+          <div class="value tabnum">{money(summary.deposit_held)}</div>
+          <div class="meta">refundable against returns</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Return rate</div>
+          <div class="value tabnum">{returnRate}%</div>
+          <div class="meta">empties recovered</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Accounts to chase</div>
+          <div class={`value tabnum ${summary.high > 0 ? 'rose' : 'emerald'}`}>{summary.high}</div>
+          <div class="meta">100+ bottles unreturned</div>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin-top:18px">
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Route</th>
+              <th class="r">Issued</th>
+              <th class="r">Returned</th>
+              <th class="r">Outstanding</th>
+              <th class="r">Deposit held</th>
+              <th>Last movement</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr>
+                <td class="cell-strong">{r.customer}</td>
+                <td class="cell-dim">{r.route ?? '—'}</td>
+                <td class="r tabnum">{num(r.issued)}</td>
+                <td class="r tabnum cell-dim">{num(r.returned)}</td>
+                <td class="r"><span class={`badge ${outClass(r.outstanding)}`}>{num(r.outstanding)}</span></td>
+                <td class="r tabnum">{money(r.deposit_held)}</td>
+                <td class="cell-dim">{shortDate(r.last_movement)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )}
+</Base>
